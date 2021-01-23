@@ -1,0 +1,9 @@
+#################################################
+##########2. comparing correlations using cocor##########
+#################################################
+install.packages("cocor")
+library(cocor)
+TECO<-read.csv("file.csv",header=TRUE)
+cocor.result1 <- cocor(~extGF + logR | extGF + logR,TECO) # comparing the correlations 
+as.htest(cocor.result1)  # showing results
+
