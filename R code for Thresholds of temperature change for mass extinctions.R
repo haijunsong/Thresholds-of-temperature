@@ -13,22 +13,23 @@ library("Rcpp")
 library("ff")
 library("bit")
 library("propagate")
-COdata = read.csv("conodont data.csv",header = TRUE) #load data
+COdata = read.csv("codata.csv",header = TRUE) #load data
 esresult = matrix(data = NA,nrow(COdata),1e4) #create a matrix to record estimated temperature data
 
 ##propagate parameter uncertainties to temperature estimation 
 for (i in 1:nrow(COdata)){
 n = 1e4
-EXPR1 <- expression(x - y*(ovalue - Os)) ##based on the equation (2) of Puc¨¦at et al., 2010. EPSL
+EXPR1 <- expression(x - (4.22+(0.2/4.9)*(x-118.7))*(ovalue - Os)) ##based on the equation (2) of Puc¨¦at et al., 2010. EPSL
 Os = COdata$Os[i]
 ovalue = COdata$O[i]
-x <- rnorm(n, 118.7, 4.9)
-y <- rnorm(n, 4.22, 0.2)
-DF1 <- cbind(x, y,ovalue,Os)
+x = rnorm(n, 118.7, 4.9)
+
+DF1 <- cbind(x,y,ovalue,Os)
 RES1 <- propagate(expr = EXPR1, data = DF1, type = "raw",
                   nsim = n)
 esresult[i,] = RES1$resSIM
 }
+
 
 ##export quantiles of estimated temperature data
 T_result_conodont = matrix(data = NA,nrow(COdata),8)
@@ -55,7 +56,7 @@ sst <- predict_seatemp(Odata$d18o, d18osw=-1, prior_mean=19.82, prior_std= 4.13)
 seatpr = sst$ensemble  # extract estimated temperature
 nrow(seatpr)
 # create a matrix to record quantiles of estimated temperature
-# we have 147 carbonate O isotope to estimated
+
 T_result_carbonate = matrix(data = NA, 101, 8)
 for(i in 1:101){
   T_result_carbonate[i,] = c(quantile(seatpr[i,],0.025),quantile(seatpr[i,],0.05),quantile(seatpr[i,],0.15),
@@ -129,7 +130,7 @@ TRSIM = function(Tdata, b){
   return(c(Tsim,timesim,ratesim))
 }
 
-result_m = matrix(data = NA, 100, 24) 
+result_m = matrix(data = NA, 4, 24) 
 for (i in 1:4){
   result_m[i,] = TRSIM(COdata,i)
 }
@@ -191,18 +192,18 @@ T_SIM = function(Tdata, b){
 
 #example for calculating a mean time of four samples
 mean_deta_Time = matrix(NA, 5, 8)
-time_1 = T_SIM(data,1)
-time_2 = T_SIM(data,2)
-time_3 = T_SIM(data,3)
-time_4 = T_SIM(data,4)
+time_1 = T_SIM(COdata,1)
+time_2 = T_SIM(COdata,2)
+time_3 = T_SIM(COdata,3)
+time_4 = T_SIM(COdata,4)
 
 meantime = (time_1+time_2+time_3+time_4)/4
 
-mean_deta_Time[1,] = c(quantile(meantime,0.025),quantile(meantime,0.05),
+mean_deta_Time = c(quantile(meantime,0.025),quantile(meantime,0.05),
             quantile(meantime,0.15),mean(meantime),
             quantile(meantime,0.85),quantile(meantime,0.95),
             quantile(meantime,0.975),sd(meantime))
-write.csv(mean_deta_Time, file = "C:\\Users\\DAI Xu\\Desktop\\time_out.csv")
+write.csv(mean_deta_Time, file = "time_out.csv")
 
 ################################
 ### Autocorrelation function ###
